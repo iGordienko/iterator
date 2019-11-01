@@ -25,6 +25,15 @@ var (
 	fourthSet  = randArray(fourthSetSize)
 )
 
+var (
+	aa = randArray(19164)
+	ab = randArray(2180)
+	ac = randArray(83148)
+	ad = randArray(146112)
+	ae = randArray(84204)
+	af = randArray(143159)
+)
+
 func Benchmark_ArrayInter(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -188,243 +197,156 @@ func Benchmark_FasterIntersector_FourSameArrays_NextSome(b *testing.B) {
 	}
 }
 
-func Benchmark_SmallComplex_BasicIterators(b *testing.B) {
-	a0 := randArray(300)
-	a1 := randArray(200)
-	a2 := randArray(100)
-	a3 := randArray(100)
-	a4 := randArray(1000)
-	a5 := randArray(500)
-	a6 := randArray(20)
-	a7 := randArray(200)
-	a8 := randArray(600)
+func Benchmark_Complex_JustIterate_BasicIterators(b *testing.B) {
+	// (a || b) && (c || d) && (e || f)
+	u1 := NewUnionIter(NewArrayIter(aa), NewArrayIter(ab))
+	u2 := NewUnionIter(NewArrayIter(ac), NewArrayIter(ad))
+	u3 := NewUnionIter(NewArrayIter(ae), NewArrayIter(af))
 
-	step1 := NewUnionIter(NewArrayIter(a0), NewArrayIter(a1))
-	step2 := NewUnionIter(NewArrayIter(a2), NewArrayIter(a3))
-	step3 := NewUnionIter(NewArrayIter(a4), NewArrayIter(a5))
-	step4 := NewUnionIter(NewArrayIter(a6), NewArrayIter(a7))
-
-	step5 := NewInterIter(step1, step2)
-	step6 := NewInterIter(step3, step4)
-
-	step7 := NewInterIter(step5, step6)
-	it := NewInterIter(step7, NewArrayIter(a8))
+	i1 := NewInterIter(u1, u2)
+	it := NewInterIter(i1, u3)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		it.Reset()
 		for {
-			_, ok := it.Next()
+			buf, ok := it.NextSome()
 			if !ok {
 				break
+			}
+			for range buf {
+
 			}
 		}
 	}
 }
 
-func Benchmark_SmallComplex_FasterIterators(b *testing.B) {
-	a0 := randArray(300)
-	a1 := randArray(200)
-	a2 := randArray(100)
-	a3 := randArray(100)
-	a4 := randArray(1000)
-	a5 := randArray(500)
-	a6 := randArray(20)
-	a7 := randArray(200)
-	a8 := randArray(600)
+func Benchmark_Complex_Exploded_Basicterators(b *testing.B) {
+	// (a || b) && (c || d) && (e || f)
 
-	step1 := NewFasterUnionIterator(NewArrayIter(a0), NewArrayIter(a1))
-	step2 := NewFasterUnionIterator(NewArrayIter(a2), NewArrayIter(a3))
-	step3 := NewFasterUnionIterator(NewArrayIter(a4), NewArrayIter(a5))
-	step4 := NewFasterUnionIterator(NewArrayIter(a6), NewArrayIter(a7))
+	//(a && c && e)
+	i11 := NewInterIter(NewArrayIter(aa), NewArrayIter(ac))
+	i1 := NewInterIter(i11, NewArrayIter(ae))
 
-	step5 := NewFasterIntersectionIterator(step1, step2)
-	step6 := NewFasterIntersectionIterator(step3, step4)
+	//|| (a && d && e)
+	i22 := NewInterIter(NewArrayIter(aa), NewArrayIter(ad))
+	i2 := NewInterIter(i22, NewArrayIter(ae))
 
-	step7 := NewFasterIntersectionIterator(step5, step6)
-	it := NewFasterIntersectionIterator(step7, NewArrayIter(a8))
+	//|| (b && c && e)
+	i33 := NewInterIter(NewArrayIter(ab), NewArrayIter(ac))
+	i3 := NewInterIter(i33, NewArrayIter(ae))
+
+	//|| (b && d && e)
+	i44 := NewInterIter(NewArrayIter(ab), NewArrayIter(ad))
+	i4 := NewInterIter(i44, NewArrayIter(ae))
+
+	//|| (a && c && f)
+	i55 := NewInterIter(NewArrayIter(ab), NewArrayIter(ac))
+	i5 := NewInterIter(i55, NewArrayIter(af))
+
+	//|| (a && d && f)
+	i66 := NewInterIter(NewArrayIter(aa), NewArrayIter(ad))
+	i6 := NewInterIter(i66, NewArrayIter(af))
+
+	//|| (b && c && f)
+	i77 := NewInterIter(NewArrayIter(ab), NewArrayIter(ac))
+	i7 := NewInterIter(i77, NewArrayIter(af))
+
+	//|| (b && d && f)
+	i88 := NewInterIter(NewArrayIter(ab), NewArrayIter(ad))
+	i8 := NewInterIter(i88, NewArrayIter(af))
+
+	u1 := NewUnionIter(i1, i2)
+	u2 := NewUnionIter(u1, i3)
+	u3 := NewUnionIter(u2, i4)
+	u4 := NewUnionIter(u3, i5)
+	u5 := NewUnionIter(u4, i6)
+	u6 := NewUnionIter(u5, i7)
+
+	it := NewUnionIter(u6, i8)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		it.Reset()
 		for {
-			_, ok := it.Next()
+			buf, ok := it.NextSome()
 			if !ok {
 				break
+			}
+			for range buf {
+
 			}
 		}
 	}
 }
 
-func Benchmark_Complex_BasicIterators(b *testing.B) {
-	a0 := randArray(30000)
-	a1 := randArray(20000)
-	a2 := randArray(10000)
-	a3 := randArray(100)
-	a4 := randArray(100000)
-	a5 := randArray(50000)
-	a6 := randArray(2000)
-	a7 := randArray(20000)
-	a8 := randArray(60000)
+func Benchmark_Complex_JustIterate_FasterIterators(b *testing.B) {
+	// (a || b) && (c || d) && (e || f)
+	u1 := NewFasterUnionIterator(NewArrayIter(aa), NewArrayIter(ab))
+	u2 := NewFasterUnionIterator(NewArrayIter(ac), NewArrayIter(ad))
+	u3 := NewFasterUnionIterator(NewArrayIter(ae), NewArrayIter(af))
 
-	step1 := NewUnionIter(NewArrayIter(a0), NewArrayIter(a1))
-	step2 := NewUnionIter(NewArrayIter(a2), NewArrayIter(a3))
-	step3 := NewUnionIter(NewArrayIter(a4), NewArrayIter(a5))
-	step4 := NewUnionIter(NewArrayIter(a6), NewArrayIter(a7))
-
-	step5 := NewInterIter(step1, step2)
-	step6 := NewInterIter(step3, step4)
-
-	step7 := NewInterIter(step5, step6)
-	it := NewInterIter(step7, NewArrayIter(a8))
+	i1 := NewFasterIntersectionIterator(u1, u2)
+	it := NewFasterIntersectionIterator(i1, u3)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		it.Reset()
 		for {
-			_, ok := it.Next()
+			buf, ok := it.NextSome()
 			if !ok {
 				break
+			}
+			for range buf {
+
 			}
 		}
 	}
 }
 
-func Benchmark_Complex_FasterIterators(b *testing.B) {
-	a0 := randArray(30000)
-	a1 := randArray(20000)
-	a2 := randArray(10000)
-	a3 := randArray(100)
-	a4 := randArray(100000)
-	a5 := randArray(50000)
-	a6 := randArray(2000)
-	a7 := randArray(20000)
-	a8 := randArray(60000)
+func Benchmark_Complex_Exploded_FasterIterators(b *testing.B) {
+	// (a || b) && (c || d) && (e || f)
 
-	step1 := NewFasterUnionIterator(NewArrayIter(a0), NewArrayIter(a1))
-	step2 := NewFasterUnionIterator(NewArrayIter(a2), NewArrayIter(a3))
-	step3 := NewFasterUnionIterator(NewArrayIter(a4), NewArrayIter(a5))
-	step4 := NewFasterUnionIterator(NewArrayIter(a6), NewArrayIter(a7))
+	//(a && c && e)
+	i11 := NewFasterIntersectionIterator(NewArrayIter(aa), NewArrayIter(ac))
+	i1 := NewFasterIntersectionIterator(i11, NewArrayIter(ae))
 
-	step5 := NewFasterIntersectionIterator(step1, step2)
-	step6 := NewFasterIntersectionIterator(step3, step4)
+	//|| (a && d && e)
+	i22 := NewFasterIntersectionIterator(NewArrayIter(aa), NewArrayIter(ad))
+	i2 := NewFasterIntersectionIterator(i22, NewArrayIter(ae))
 
-	step7 := NewFasterIntersectionIterator(step5, step6)
-	it := NewFasterIntersectionIterator(step7, NewArrayIter(a8))
+	//|| (b && c && e)
+	i33 := NewFasterIntersectionIterator(NewArrayIter(ab), NewArrayIter(ac))
+	i3 := NewFasterIntersectionIterator(i33, NewArrayIter(ae))
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		it.Reset()
-		for {
-			_, ok := it.Next()
-			if !ok {
-				break
-			}
-		}
-	}
-}
+	//|| (b && d && e)
+	i44 := NewFasterIntersectionIterator(NewArrayIter(ab), NewArrayIter(ad))
+	i4 := NewFasterIntersectionIterator(i44, NewArrayIter(ae))
 
-func Benchmark_HugeComplex_BasicIterators(b *testing.B) {
-	a0 := randArray(300000)
-	a1 := randArray(100000)
-	a2 := randArray(100000)
-	a3 := randArray(1000)
-	a4 := randArray(1000000)
-	a5 := randArray(500000)
-	a6 := randArray(20000)
-	a7 := randArray(200000)
-	a8 := randArray(600000)
+	//|| (a && c && f)
+	i55 := NewFasterIntersectionIterator(NewArrayIter(ab), NewArrayIter(ac))
+	i5 := NewFasterIntersectionIterator(i55, NewArrayIter(af))
 
-	step1 := NewFasterUnionIterator(NewArrayIter(a0), NewArrayIter(a1))
-	step2 := NewFasterUnionIterator(NewArrayIter(a2), NewArrayIter(a3))
-	step3 := NewFasterUnionIterator(NewArrayIter(a4), NewArrayIter(a5))
-	step4 := NewFasterUnionIterator(NewArrayIter(a6), NewArrayIter(a7))
+	//|| (a && d && f)
+	i66 := NewFasterIntersectionIterator(NewArrayIter(aa), NewArrayIter(ad))
+	i6 := NewFasterIntersectionIterator(i66, NewArrayIter(af))
 
-	step5 := NewFasterIntersectionIterator(step1, step2)
-	step6 := NewFasterIntersectionIterator(step3, step4)
+	//|| (b && c && f)
+	i77 := NewFasterIntersectionIterator(NewArrayIter(ab), NewArrayIter(ac))
+	i7 := NewFasterIntersectionIterator(i77, NewArrayIter(af))
 
-	step7 := NewFasterIntersectionIterator(step5, step6)
+	//|| (b && d && f)
+	i88 := NewFasterIntersectionIterator(NewArrayIter(ab), NewArrayIter(ad))
+	i8 := NewFasterIntersectionIterator(i88, NewArrayIter(af))
 
-	step8 := NewFasterIntersectionIterator(step7, NewArrayIter(a6))
-	step9 := NewFasterIntersectionIterator(step8, NewArrayIter(a1))
+	u1 := NewFasterUnionIterator(i1, i2)
+	u2 := NewFasterUnionIterator(u1, i3)
+	u3 := NewFasterUnionIterator(u2, i4)
+	u4 := NewFasterUnionIterator(u3, i5)
+	u5 := NewFasterUnionIterator(u4, i6)
+	u6 := NewFasterUnionIterator(u5, i7)
 
-	it := NewFasterIntersectionIterator(step9, NewArrayIter(a8))
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		it.Reset()
-		for {
-			_, ok := it.Next()
-			if !ok {
-				break
-			}
-		}
-	}
-}
-
-func Benchmark_HugeComplex_FasterIterators(b *testing.B) {
-	a0 := randArray(300000)
-	a1 := randArray(100000)
-	a2 := randArray(100000)
-	a3 := randArray(1000)
-	a4 := randArray(1000000)
-	a5 := randArray(500000)
-	a6 := randArray(20000)
-	a7 := randArray(200000)
-	a8 := randArray(600000)
-
-	step1 := NewFasterUnionIterator(NewArrayIter(a0), NewArrayIter(a1))
-	step2 := NewFasterUnionIterator(NewArrayIter(a2), NewArrayIter(a3))
-	step3 := NewFasterUnionIterator(NewArrayIter(a4), NewArrayIter(a5))
-	step4 := NewFasterUnionIterator(NewArrayIter(a6), NewArrayIter(a7))
-
-	step5 := NewFasterIntersectionIterator(step1, step2)
-	step6 := NewFasterIntersectionIterator(step3, step4)
-
-	step7 := NewFasterIntersectionIterator(step5, step6)
-
-	step8 := NewFasterIntersectionIterator(step7, NewArrayIter(a6))
-	step9 := NewFasterIntersectionIterator(step8, NewArrayIter(a1))
-
-	it := NewFasterIntersectionIterator(step9, NewArrayIter(a8))
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		it.Reset()
-		for {
-			_, ok := it.Next()
-			if !ok {
-				break
-			}
-		}
-	}
-}
-
-func Benchmark_HugeComplex_FasterIterators_NextSome(b *testing.B) {
-	a0 := randArray(300000)
-	a1 := randArray(100000)
-	a2 := randArray(100000)
-	a3 := randArray(1000)
-	a4 := randArray(1000000)
-	a5 := randArray(500000)
-	a6 := randArray(20000)
-	a7 := randArray(200000)
-	a8 := randArray(600000)
-
-	step1 := NewFasterUnionIterator(NewArrayIter(a0), NewArrayIter(a1))
-	step2 := NewFasterUnionIterator(NewArrayIter(a2), NewArrayIter(a3))
-	step3 := NewFasterUnionIterator(NewArrayIter(a4), NewArrayIter(a5))
-	step4 := NewFasterUnionIterator(NewArrayIter(a6), NewArrayIter(a7))
-
-	step5 := NewFasterIntersectionIterator(step1, step2)
-	step6 := NewFasterIntersectionIterator(step3, step4)
-
-	step7 := NewFasterIntersectionIterator(step5, step6)
-
-	step8 := NewFasterIntersectionIterator(step7, NewArrayIter(a6))
-	step9 := NewFasterIntersectionIterator(step8, NewArrayIter(a1))
-
-	it := NewFasterIntersectionIterator(step9, NewArrayIter(a8))
+	it := NewFasterUnionIterator(u6, i8)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
