@@ -362,3 +362,68 @@ func Benchmark_Complex_Exploded_FasterIterators(b *testing.B) {
 		}
 	}
 }
+
+func Benchmark_Complex_Array_WithBuf(b *testing.B) {
+	// (a || b) && (c || d) && (e || f)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		//(a && c && e)
+		iab := arrays.Union(aa, ab)
+		icd := arrays.Union(ac, ad)
+		ief := arrays.Union(ae, af)
+
+		i1 := arrays.Intersect(iab, icd)
+		it := arrays.Intersect(i1, ief)
+
+		for range it {
+
+		}
+	}
+}
+
+func Benchmark_Complex_Exploded_Array_WithBuf(b *testing.B) {
+	// (a || b) && (c || d) && (e || f)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		//(a && c && e)
+		iac := arrays.Intersect(aa, ac)
+		iace := arrays.Intersect(iac, ae)
+
+		//|| (a && d && e)
+		iad := arrays.Intersect(aa, ad)
+		iade := arrays.Intersect(iad, ae)
+
+		//|| (b && c && e)
+		ibc := arrays.Intersect(ab, ac)
+		ibce := arrays.Intersect(ibc, ae)
+
+		//|| (b && d && e)
+		ibd := arrays.Intersect(ab, ad)
+		ibde := arrays.Intersect(ibd, ad)
+
+		//|| (a && c && f)
+		iacf := arrays.Intersect(iac, af)
+
+		//|| (a && d && f)
+		iadf := arrays.Intersect(iad, af)
+
+		//|| (b && c && f)
+		ibcf := arrays.Intersect(ibc, af)
+
+		//|| (b && d && f)
+		ibdf := arrays.Intersect(ibd, af)
+
+		u1 := arrays.Union(iace, iade)
+		u2 := arrays.Union(u1, ibce)
+		u3 := arrays.Union(u2, ibde)
+		u4 := arrays.Union(u3, iacf)
+		u5 := arrays.Union(u4, iadf)
+		u6 := arrays.Union(u5, ibcf)
+
+		it := arrays.Union(u6, ibdf)
+
+		for range it {
+
+		}
+	}
+}
